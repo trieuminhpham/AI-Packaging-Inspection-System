@@ -57,3 +57,11 @@ Create a dedicated environment for the project:
 conda create -n packaging_ai python=3.9
 conda activate packaging_ai
 pip install ultralytics opencv-python numpy
+
+### 2. Execution
+
+Ensure your RTSP URLs and model paths are correctly set in the configuration:
+Bash
+
+# Run the main monitoring system
+python main.py
