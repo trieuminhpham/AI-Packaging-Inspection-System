@@ -51,17 +51,16 @@ The system separates AI inference from the geometric identification logic to ens
 
 ## 💻 Installation & Usage
 
-### 1. Environment Setup
-Create a dedicated environment for the project:
+### Quick Start
+Run the following commands to set up the environment and start the system:
 
-conda create -n packaging_ai python=3.9
+```bash
+# 1. Create and activate environment
+conda create -n packaging_ai python=3.9 -y
 conda activate packaging_ai
+
+# 2. Install dependencies
 pip install ultralytics opencv-python numpy
 
-### 2. Execution
-
-Ensure your RTSP URLs and model paths are correctly set in the configuration:
-Bash
-
-# Run the main monitoring system
+# 3. Execution (Ensure RTSP URLs are configured in main.py)
 python main.py
