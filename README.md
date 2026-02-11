@@ -53,7 +53,7 @@ The system separates AI inference from the geometric identification logic to ens
 
 ### 1. Environment Setup
 Create a dedicated environment for the project:
-```bash
+
 conda create -n packaging_ai python=3.9
 conda activate packaging_ai
 pip install ultralytics opencv-python numpy
