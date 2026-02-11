@@ -1,70 +1,59 @@
-# AI-Packaging-Inspection-System
-An automated industrial quality control system using YOLOv8-OBB and geometric algorithms to detect packaging errors in electronic component assembly via a 4-camera RTSP setup.
+## AI-Powered Packaging Inspection System (YOLOv8-OBB)
 
-✨ Key Features
+An industrial-grade automated Quality Control (QC) system designed to detect and verify electronic component packaging using high-speed computer vision. The system integrates **YOLOv8-OBB** for precision slot localization and a custom **geometric analytic algorithm** to ensure all components are placed correctly according to strict assembly rules.
 
-    Dual-Model AI Architecture:
+## 📌 Project Overview
+This project automates the verification of multi-stage packaging by synchronizing 4 independent camera streams into a unified monitoring grid.
+* **AI Architecture:** Dual-model system featuring YOLOv8-OBB for rotated slot detection and standard YOLOv8 for component identification.
+* **Logic Engine:** Python-based multi-threading for real-time RTSP processing and geometric verification.
+* **Key Innovation:** Implementing a **Collinearity Algorithm** using triangle area calculations to identify 5 specific slots in a tilted or rotated tray.
 
-        OBB Model (best.pt): Uses Oriented Bounding Boxes to precisely detect 5 slot locations regardless of the tray's rotation or tilt.
 
-        Standard Model (best_ck.pt): Detects specific electronic components such as LEDs, PCBs, chargers, and cables.
 
-    Geometric 5-Slot Identification:
+## 🌟 Key Features
+1.  **Oriented Slot Identification Logic:**
+    * Directly evaluates **10 combinations** ($\binom{5}{3}$) of detected points to find the primary row of 3 collinear slots.
+    * Computes the **Triangle Area** ($S = \frac{1}{2} |x_1(y_2 - y_3) + x_2(y_3 - y_1) + x_3(y_1 - y_2)|$) to verify alignment with microsecond latency.
+    * Dynamically maps Local IDs (1-5) to Global IDs (1-10) depending on the camera's designated assembly stage.
 
-        Evaluates (35​) combinations (10 cases) to find the primary collinear group of 3 slots.
+2.  **Industrial Process & Stability Management:**
+    * **Stability Timer:** Uses a non-blocking timer to ensure components are only marked as "Saved" if they remain valid for **3.0 consecutive seconds**.
+    * **Cumulative Allowed Items:** Implements a stage-aware logic where cameras at later stages can recognize items from previous steps but flag "future" components as process violations.
+    * **Priority Status Messaging:** Displays real-time alerts for "WRONG ITEM", "MISSING", or "HOLDING" states based on the current assembly flow.
 
-        Determines the sequence (Slot 1-5) based on the relative position of the 2-slot and 3-slot rows.
+3.  **High-Performance Vision Pipeline:**
+    * **Multi-Threaded RTSP:** Captures and processes 4 simultaneous camera streams via TCP to eliminate frame lag and buffering.
+    * **OBB Precision:** Extracts `xywhr` (center, size, and rotation) data to maintain accurate slot tracking even if the tray is moved or tilted.
+    * **Dynamic 2x2 Grid:** Renders all camera feeds into a single synchronized interface with color-coded status overlays.
 
-    Industrial Process Logic (config.py):
 
-        Stability Timer: Validates an "OK" state only if the correct component remains in the slot for 3.0 consecutive seconds.
 
-        Cumulative Allowed Items: A smart logic that remembers the process; cameras at later stages can recognize items from previous stages but flag "future" items as a process violation.
+## 🔌 System Configuration
+The system uses 4 IP cameras to monitor different stages of the packaging process defined in `config.py`:
 
-    Multi-Camera RTSP Integration: Processes 4 simultaneous IP camera streams (Cam 1-4) displayed in a synchronized 2x2 grid.
+| Camera | Required Components | Global IDs | Status Messages |
+| :--- | :--- | :--- | :--- |
+| **Cam 1** | Small LED (x3) | 1, 2, 3 | WAITING / MISSING |
+| **Cam 2** | Large LED, Main Board | 4, 5 | HOLDING 3s / SAVED |
+| **Cam 3** | RGB, Grey/White Cables | 6, 7, 8 | WRONG ITEM |
+| **Cam 4** | Component Bag, Charger | 9, 10 | CHECKLIST SAVED |
 
-🛠 Technology Stack
+## 🏗️ Software Architecture (Logic Pipeline)
+The system separates AI inference from the geometric identification logic to ensure maximum processing speed.
 
-    Language: Python.
+| Phase | Component | Logic | Function |
+| :--- | :--- | :--- | :--- |
+| **Inference** | YOLOv8-OBB | `best.pt` | Detects 5 slots and returns oriented coordinates. |
+| **Identification**| Geometry Engine | $\binom{5}{3}$ Combinations | Finds 3 collinear points to assign S1, S2, and S3. |
+| **Verification** | Logic Engine | `PACKING_RULES` | Validates if the item in a slot matches the `expected_item`. |
+| **Stability** | Timer Class | `time.time()` | Tracks 3.0s duration before marking a slot as `is_saved`. |
+| **Display** | UI Thread | OpenCV Grid | Renders OBB frames and status messages in a 2x2 grid. |
 
-    AI Framework: YOLOv8 (Ultralytics).
+## 💻 Installation & Usage
 
-    Computer Vision: OpenCV.
-
-    Data Processing: NumPy (Vectorized collinearity checks).
-
-    Protocol: RTSP (Real-Time Streaming Protocol) via TCP for high stability.
-
-📐 The Identification Algorithm
-
-The system identifies the primary row by calculating the area of a triangle formed by any 3 detected slot centers using the analytic formula:
-S=21​∣x1​(y2​−y3​)+x2​(y3​−y1​)+x3​(y1​−y2​)∣
-
-If S<Threshold, these three points are identified as Slots 1, 2, and 3. The remaining slots are assigned based on their Euclidean distance and the tray's orientation.
-⚙️ Process Configuration (config.py)
-
-The system follows strict packaging rules defined for each production stage:
-Camera	Required Components	Status Messages
-Cam 1	Small LED (x3)	WAITING / MISSING
-Cam 2	Large LED, Main Board	HOLDING 3s / SAVED
-Cam 3	RGB Cable, Grey/White Cables	WRONG ITEM
-Cam 4	Component Bag, Charger	CHECKLIST SAVED
-🚀 Installation & Usage
-1. Environment Setup
-Bash
-
+### 1. Environment Setup
+Create a dedicated environment for the project:
+```bash
 conda create -n packaging_ai python=3.9
 conda activate packaging_ai
 pip install ultralytics opencv-python numpy
-
-2. Execution
-
-    Ensure all IP cameras are active on the local network.
-
-    Configure the RTSP URLs in main.py.
-
-    Run the system:
-
-Bash
-
-python main.py
